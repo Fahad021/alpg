@@ -209,14 +209,10 @@ class Household:
 		self.WashingDays = random.sample(range(0, 7), days)
 		for i in range(0,7):
 			if i in self.WashingDays:
-				notWorking = False
-				for p in self.Persons:
-					if p.Age > 25 and i not in p.Workdays:
-						notWorking = True
-				
+				notWorking = any(p.Age > 25 and i not in p.Workdays for p in self.Persons)
 				if notWorking and random.random() < 0.8:
 					self.washingMoment[i] = random.randint((10*60), (17*60))
-				
+
 				else:
 					moment = random.random()
 					if(moment < 0.2):
@@ -247,13 +243,13 @@ class Household:
 					self.DishwashMoment[i] = random.randint((22*60), (23.5*60))
 	
 	def simulate(self):		
-		for day in range(config.startDay, config.numDays+config.startDay):	
+		for day in range(config.startDay, config.numDays+config.startDay):
 			dayOfWeek = day%7
-			
+
 			#Select occupancy profiles for each person
 			self.OccupancyPersonsDay = [0] * 1440
 			self.OccupancyAdultsDay = [0] * 1440
-			self.OccupancyPerson = [[] for x in range(0, len(self.Persons))]
+			self.OccupancyPerson = [[] for _ in range(0, len(self.Persons))]
 			for p in range(0, len(self.Persons)):
 				schedulePerson = self.Persons[p].simulate(day)
 				#print(schedulePerson)
@@ -262,11 +258,11 @@ class Household:
 					#This one may be useful to use for trips by EV in events (e.g. grocery shopping) and also scheduling of devices such as washing machines :)
 					self.OccupancyAdultsDay = [sum(x) for x in zip(self.OccupancyAdultsDay, schedulePerson)]
 				self.OccupancyPerson[p] = schedulePerson
-			
+
 			#Activities for the whole family
 			eventDuration = 0;
 			eventStart = 0;
-			if (day%7==0 or day%7==6) and random.random() < self.familyActivites:
+			if day % 7 in [0, 6] and random.random() < self.familyActivites:
 				#Only on Sundays we will have outings
 				#see whether it takes whole day or just a visit to other family members
 				#Notice that for now there is no relation between the individual family members and this outing!
@@ -282,7 +278,7 @@ class Household:
 						eventStart = random.randint(15*60,16*60)
 					else:
 						eventStart = random.randint(13*60,14*60)	
-			
+
 				#Make these entries empty, no-one is home!
 				for t in range(eventStart, eventStart+eventDuration):
 					self.OccupancyPersonsDay[t] = 0
@@ -304,7 +300,7 @@ class Household:
 					cookingConsumption = 0
 					cookingDuration = 0
 					break
-		
+
 			#Empty consumption patterns
 			ElectronicsProfile = [0] * 1440
 			LightingProfile = [0] * 1440
@@ -336,27 +332,27 @@ class Household:
 			for f in range(0, len(self.Fridges)):
 				profile = self.Fridges[f].simulate(1440)
 				FridgeProfile = [sum(x) for x in zip(FridgeProfile, profile)]	
-			
+
 			#Household and whitegoods
 			#ironing
 			if random.randint(1,7) == 1:
 				OtherProfile = [sum(x) for x in zip(OtherProfile, self.Devices["Ironing"].simulate(1440, self.OccupancyAdultsDay, len(self.Persons)))]	
-		
+
 			#Vacuumcleaning
 			if random.randint(1,7) == 1:
 				OtherProfile = [sum(x) for x in zip(OtherProfile, self.Devices["Vacuumcleaner"].simulate(1440, self.OccupancyAdultsDay, len(self.Persons)))]	
-							
+
 			#Smart devices
 			if day-config.startDay < config.numDays - 1:
 				#Making sure that we dont run out of the simulation time
-				
+
 				#Whats for EV?					
 				if self.hasEV > 0:
 					self.Devices["ElectricalVehicle"].simulate(day, self.Persons[0], eventStart, eventDuration)
-				
+
 				if (((dayOfWeek in self.WashingDays) and (random.random()  < 0.9)) or (random.random()  < 0.1)):
 					self.Devices["WashingMachine"].simulate(1440, day, self.OccupancyAdultsDay, self.washingMoment[dayOfWeek])
-				
+
 				#check if household has a dishwashmachine!
 				if(self.hasDishwasher == True):
 					if (((dayOfWeek in self.DishwashDays) and (random.random()  < 0.9)) or (random.random()  < 0.1)):
@@ -544,7 +540,7 @@ class HouseholdFamilyDualParent(Household):
 		numKids = round(max(min(4, random.gauss(1.7, 0.4)), 1))	# http://www.cbs.nl/nl-NL/menu/themas/bevolking/faq/specifiek/faq-hoeveel-kinderen.htm
 
 		self.ConsumptionYearly		= profilegentools.gaussMinMax(2010+(700*numKids),500+(numKids*100))*config.consumptionFactor #kWh http://www.nibud.nl/uitgaven/huishouden/gas-elektriciteit-en-water.html
-		
+
 		ageParents = random.randint(40,55)
 		if parttime == True:
 			self.Persons = [ persons.PersonWorker(ageParents), persons.PersonParttimeWorker(ageParents)]
@@ -553,21 +549,21 @@ class HouseholdFamilyDualParent(Household):
 		else:
 			self.Persons = [ persons.PersonWorker(ageParents)]
 			self.Persons.append(copy.deepcopy(self.Persons[0]))  #Make a copy, we expect a household to be rather synchronized!
-			
+
 		#To make life easy, only one persons.Person will use the electric vehicle, so only the main persons.Person will receive a driving distance
 		self.Persons[0].setDistanceToWork(round(max(0, random.gauss(config.commuteDistanceMean, config.commuteDistanceSigma))))	
-				
+
 		#now add the kids
-		for i in range(0,numKids):
+		for _ in range(0,numKids):
 			self.Persons.append(persons.PersonStudent(random.randint(ageParents-3,ageParents+3)-30))
-		
+
 		self.Fridges = [ devices.DeviceFridge(random.randint(config.ConsumptionFridgeSmallMin,config.ConsumptionFridgeSmallMax)), devices.DeviceFridge(random.randint(config.ConsumptionFridgeSmallMin,config.ConsumptionFridgeSmallMax)) ]
-		
+
 		self.hasDishwasher = random.randint(0,5) < 4 #60%	
-		
+
 		#Determine washing days
 		self.generateWashingdays(min(5+numKids, 7))
-		
+
 		#Dermine Dishwasher times
 		if self.hasDishwasher:
 			self.generateDishwashdays(min(5+numKids, 7))
@@ -581,9 +577,9 @@ class HouseholdFamilySingleParent(Household):
 	def __init__(self, parttime=False, jobless=False):
 		self.generate()
 		numKids = round(max(min(4, random.gauss(1.7, 0.4)), 1))	# http://www.cbs.nl/nl-NL/menu/themas/bevolking/faq/specifiek/faq-hoeveel-kinderen.htm
-	
+
 		self.ConsumptionYearly		= profilegentools.gaussMinMax(3360+(700*numKids),500+(numKids*100))*config.consumptionFactor #kWh http://www.nibud.nl/uitgaven/huishouden/gas-elektriciteit-en-water.html
-		
+
 		ageParents = random.randint(40,55)
 		if parttime == True:
 			self.Persons = [ persons.PersonParttimeWorker(ageParents) ]
@@ -591,22 +587,22 @@ class HouseholdFamilySingleParent(Household):
 			self.Persons = [ persons.PersonJobless(ageParents) ]
 		else:
 			self.Persons = [ persons.PersonWorker(ageParents) ]
-			
+
 		if not jobless:
 			#To make life easy, only one persons.Person will use the electric vehicle, so only the main persons.Person will receive a driving distance
 			self.Persons[0].setDistanceToWork(round(max(0, random.gauss(config.commuteDistanceMean, config.commuteDistanceSigma))))	
-				
+
 		#now add the kids
-		for i in range(0,numKids):
+		for _ in range(0,numKids):
 			self.Persons.append(persons.PersonStudent(random.randint(ageParents-3,ageParents+3)-30))
-			
+
 		self.Fridges = [ devices.DeviceFridge(random.randint(config.ConsumptionFridgeSmallMin,config.ConsumptionFridgeSmallMax)), devices.DeviceFridge(random.randint(config.ConsumptionFridgeSmallMin,config.ConsumptionFridgeSmallMax)) ]
-		
+
 		self.hasDishwasher = random.randint(0,5) < 4 #60%
-		
+
 		#Determine washing days
 		self.generateWashingdays(min(5+numKids, 7))
-		
+
 		#Dermine Dishwasher times
 		if self.hasDishwasher:
 			self.generateDishwashdays(min(5+numKids, 7))

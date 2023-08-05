@@ -91,11 +91,7 @@ class Person:
 		else:
 			self.thermostatSetpoint = random.randint(int(18.5*2), int(20.5*2)) / 2.0
 
-		# Heat production by person, see ASHRAE chapter 18
-		self.heatGeneration = 120 # int(130*(92.5)) #Watts. Note that we lack male/female differnce
-		if self.Age < 15:
-			self.heatGeneration = 97 # 75% of adule male for children
-
+		self.heatGeneration = 97 if self.Age < 15 else 120
 		# Showering schedule
 		# More info: E.J.M. Blokker, "Stochastic water demand modelling for a better understanding of hydraulics in water distribution networks". PhD Thesis TU Delft, 2010
 		numOfShowerDays = random.randint(4, 6)
@@ -129,15 +125,13 @@ class Person:
 			self.DistanceToWork = distance
 	
 	def simulateWorkday(self, day):
-		#select variables
-		eventList = []
 		self.WorkdayWakeUp = random.randint((self.WorkdayWakeUp_Avg - self.WorkdayWakeUp_Variate), (self.WorkdayWakeUp_Avg + self.WorkdayWakeUp_Variate))
-		eventList.append(self.WorkdayWakeUp)
+		eventList = [self.WorkdayWakeUp]
 		self.WorkdayLeave = random.randint((self.WorkdayLeave_Avg - self.WorkdayLeave_Variate), (self.WorkdayLeave_Avg + self.WorkdayLeave_Variate))
 		eventList.append(self.WorkdayLeave)
 		self.WorkdayArrival = random.randint((self.WorkdayArrival_Avg - self.WorkdayArrival_Variate), (self.WorkdayArrival_Avg + self.WorkdayArrival_Variate))
 		eventList.append(self.WorkdayArrival)
-		
+
 		if ((day%7) == self.WorkdaySportday):
 			#Today this person will go to sport or have an activity. Times are synchronized to keep it easy
 			self.WorkdayActivity = random.randint((self.WorkdaySport_Avg - self.WorkdaySport_Variate), (self.WorkdaySport_Avg + self.WorkdaySport_Variate))
@@ -149,10 +143,10 @@ class Person:
 			eventList.append(self.WorkdayActivity)
 			self.WorkdayActivityEnd = self.WorkdayActivity + random.randint((self.WorkdaySportDuration_Avg - self.WorkdaySportDuration_Variate), (self.WorkdaySportDuration_Avg + self.WorkdaySportDuration_Variate))
 			eventList.append(self.WorkdayActivityEnd)
-			
+
 		self.WorkdayBedTime = min(1439, random.randint((self.WorkdayBedTime_Avg - self.WorkdayBedTime_Variate), (self.WorkdayBedTime_Avg + self.WorkdayBedTime_Variate)))
 		eventList.append(self.WorkdayBedTime)
-		
+
 		active = 0 #start asleep
 		activeList = []
 		for minute in range(0,1440):
@@ -161,22 +155,18 @@ class Person:
 			activeList.append(active)
 		assert((len(eventList)%2)==0)
 		assert(self.WorkdayBedTime<1440)
-		
+
 		return activeList
 		
 		
 	def simulateWeekend(self, day):
-		#select variables
-		eventList = []
-		
 		#basically this simulates a free day. On normal days one will wake up more early
-		if((day%7)==0 or (day%7)==6):
+		if day % 7 in [0, 6]:
 			self.WeekendWakeUp = random.randint((self.WeekendWakeUp_Avg - self.WeekendWakeUp_Variate), (self.WeekendWakeUp_Avg + self.WeekendWakeUp_Variate))
 		else:
 			#Day off, get out of bed earlier
 			self.WeekendWakeUp = random.randint((self.WeekendWakeUp_Avg - self.WeekendWakeUp_Variate - 60), (self.WeekendWakeUp_Avg + self.WeekendWakeUp_Variate - 60))
-		eventList.append(self.WeekendWakeUp)
-		
+		eventList = [self.WeekendWakeUp]
 		if (((day%7) == self.WeekendSportday)):
 			#Today this person will go to sport or have an activity. Times are synchronized to keep it easy
 			self.WeekendActivity = random.randint((self.WeekendSport_Avg - self.WeekendSport_Variate), (self.WeekendSport_Avg + self.WeekendSport_Variate))
@@ -209,10 +199,10 @@ class Person:
 			eventList.append(self.WeekendActivity)
 			self.WeekendActivityEnd = self.WeekendActivity + duration
 			eventList.append(self.WeekendActivityEnd)
-			
+
 		self.WeekendBedTime = random.randint((self.WeekendBedTime_Avg - self.WeekendBedTime_Variate), (self.WeekendBedTime_Avg + self.WeekendBedTime_Variate))
 		eventList.append(self.WeekendBedTime)
-		
+
 		active = 0 #start asleep
 		activeList = []
 		for minute in range(0,1440):
@@ -220,20 +210,19 @@ class Person:
 				active = 1 - active
 			activeList.append(active)
 		assert((len(eventList)%2)==0)
-		
+
 		assert(self.WeekendBedTime<1440)
-		
+
 		return activeList
 
 		
 	def simulate(self, day):
-		if (day%7) in self.Workdays:
-			if((day%7)==0 or (day%7)==6 or random.randint(0,(100-len(self.Workdays)*10))==0):
-				return self.simulateWeekend(day)
-			else:
-				return self.simulateWorkday(day)
-		else:
+		if day % 7 not in self.Workdays:
 			return self.simulateWeekend(day)
+		if((day%7)==0 or (day%7)==6 or random.randint(0,(100-len(self.Workdays)*10))==0):
+			return self.simulateWeekend(day)
+		else:
+			return self.simulateWorkday(day)
 		
 		
 		

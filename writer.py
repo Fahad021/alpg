@@ -24,38 +24,38 @@ import os
 import profilegentools
 
 def writeCsvLine(fname, hnum, line):
-	if not os.path.exists(outputFolder+'/'+fname): 
+	if not os.path.exists(f'{outputFolder}/{fname}'): 
 		#overwrite
-		f = open(outputFolder+'/'+fname, 'w')
+		f = open(f'{outputFolder}/{fname}', 'w')
 	else:
 		#append
-		f = open(outputFolder+'/'+fname, 'a')
+		f = open(f'{outputFolder}/{fname}', 'a')
 	f.write(line + '\n')
 	f.close()
 	
 def writeCsvRow(fname, hnum, data):
 	if hnum == 0:
-		with open(outputFolder+'/'+fname, 'w') as f:
+		with open(f'{outputFolder}/{fname}', 'w') as f:
 			for l in range(0, len(data)):
 				f.write(str(round(data[l])) + '\n')
 	else:
-		with open(outputFolder+'/'+fname, 'r+') as f:
+		with open(f'{outputFolder}/{fname}', 'r+') as f:
 			lines = f.readlines()
 			f.seek(0)
 			f.truncate()
 			j = 0
 			for line in lines:
 				line = line.rstrip()
-				line = line + ';' + str(round(data[j])) + '\n'
+				line = f'{line};{str(round(data[j]))}' + '\n'
 				f.write(line)
 				j = j + 1	
 
 
 def createFile(fname):
-    if os.path.exists(fname):
-        os.utime(outputFolder+'/'+fname, None)
-    else:
-        open(outputFolder+'/'+fname, 'a').close()
+	if os.path.exists(fname):
+		os.utime(f'{outputFolder}/{fname}', None)
+	else:
+		open(f'{outputFolder}/{fname}', 'a').close()
 
 # Function to create empty files to ensure that certain software doesn't crash for lack of files
 def createEmptyFiles():
@@ -120,7 +120,7 @@ def writeHousehold(house, num):
 	writeCsvRow('Electricity_Profile_GroupElectronics.csv', num, house.Consumption['Electronics'])
 	writeCsvRow('Electricity_Profile_GroupLighting.csv', num, house.Consumption['Lighting'])
 	writeCsvRow('Electricity_Profile_GroupStandby.csv', num, house.Consumption['Standby'])
-	
+
 	writeCsvRow('Reactive_Electricity_Profile.csv', num, house.ReactiveConsumption['Total'])
 	writeCsvRow('Reactive_Electricity_Profile_GroupOther.csv', num, house.ReactiveConsumption['Other'])
 	writeCsvRow('Reactive_Electricity_Profile_GroupInductive.csv', num, house.ReactiveConsumption['Inductive'])
@@ -152,83 +152,83 @@ def writeHousehold(house, num):
 	#Write all heatdevices:
 	for k, v, in house.HeatingDevices.items():
 		house.HeatingDevices[k].writeDevice(num)
-	
-	#House specific devices	
+
+	#House specific devices
 	if house.House.hasPV:
-		text = str(num)+':'
-		text += str(house.House.pvElevation)+','+str(house.House.pvAzimuth)+','+str(house.House.pvEfficiency)+','+str(house.House.pvArea)
+		text = f'{str(num)}:'
+		text += f'{str(house.House.pvElevation)},{str(house.House.pvAzimuth)},{str(house.House.pvEfficiency)},{str(house.House.pvArea)}'
 		writeCsvLine('PhotovoltaicSettings.txt', num, text)
-		
+
 	writeCsvRow('Electricity_Profile_PVProduction.csv', num, house.PVProfile)
-		
+
 	if house.House.hasBattery:
-		text = str(num)+':'
-		text += str(house.House.batteryPower)+','+str(house.House.batteryCapacity)+','+str(round(house.House.batteryCapacity/2))
+		text = f'{str(num)}:'
+		text += f'{str(house.House.batteryPower)},{str(house.House.batteryCapacity)},{str(round(house.House.batteryCapacity / 2))}'
 		writeCsvLine('BatterySettings.txt', num, text)
 
 	# Write what type of heating device is used
 	if house.hasHP:
-		text = str(num)+':HP'			# Heat pump
-		writeCsvLine('HeatingSettings.txt', num, text)
+		text = f'{str(num)}:HP'
 	elif house.hasCHP:
-		text = str(num)+':CHP'			# Combined Heat Power
-		writeCsvLine('HeatingSettings.txt', num, text)
+		text = f'{str(num)}:CHP'
 	else:
-		text = str(num)+':CONVENTIONAL'	# Conventional heating device, e.g. natural gas boiler
-		writeCsvLine('HeatingSettings.txt', num, text)
+		text = f'{str(num)}:CONVENTIONAL'
+
+	writeCsvLine('HeatingSettings.txt', num, text)
 	
 def writeDeviceBufferTimeshiftable(machine, hnum):
-	if machine.BufferCapacity > 0 and len(machine.StartTimes) > 0:
-		text = str(hnum)+':'
-		text += profilegentools.createStringList(machine.StartTimes, None, 60)
-		writeCsvLine('ElectricVehicle_Starttimes.txt', hnum, text)
-		
-		text = str(hnum)+':'
-		text += profilegentools.createStringList(machine.EndTimes, None, 60)
-		writeCsvLine('ElectricVehicle_Endtimes.txt', hnum, text)
-			
-		text = str(hnum)+':'
-		text += profilegentools.createStringList(machine.EnergyLoss, None, 1, False)
-		writeCsvLine('ElectricVehicle_RequiredCharge.txt', hnum, text)	
-			
-		text = str(hnum)+':'
-		text += str(machine.BufferCapacity)+','+str(machine.Consumption)
-		writeCsvLine('ElectricVehicle_Specs.txt', hnum, text)
+	if machine.BufferCapacity <= 0 or len(machine.StartTimes) <= 0:
+		return
+	text = f'{str(hnum)}:'
+	text += profilegentools.createStringList(machine.StartTimes, None, 60)
+	writeCsvLine('ElectricVehicle_Starttimes.txt', hnum, text)
+
+	text = f'{str(hnum)}:'
+	text += profilegentools.createStringList(machine.EndTimes, None, 60)
+	writeCsvLine('ElectricVehicle_Endtimes.txt', hnum, text)
+
+	text = f'{str(hnum)}:'
+	text += profilegentools.createStringList(machine.EnergyLoss, None, 1, False)
+	writeCsvLine('ElectricVehicle_RequiredCharge.txt', hnum, text)	
+
+	text = f'{str(hnum)}:'
+	text += f'{str(machine.BufferCapacity)},{str(machine.Consumption)}'
+	writeCsvLine('ElectricVehicle_Specs.txt', hnum, text)
 		
 
 def writeDeviceTimeshiftable(machine, hnum):
 	if machine.name == "WashingMachine" and len(machine.StartTimes) > 0:
-		text = str(hnum)+':'
+		text = f'{str(hnum)}:'
 		text += profilegentools.createStringList(machine.StartTimes, None, 60)
 		writeCsvLine('WashingMachine_Starttimes.txt', hnum, text)
-		
-		text = str(hnum)+':'
+
+		text = f'{str(hnum)}:'
 		text += profilegentools.createStringList(machine.EndTimes, None, 60)
 		writeCsvLine('WashingMachine_Endtimes.txt', hnum, text)
-		
-		text = str(hnum)+':'
+
+		text = f'{str(hnum)}:'
 		text += machine.LongProfile
 		writeCsvLine('WashingMachine_Profile.txt', hnum, text)
-		
+
 	elif len(machine.StartTimes) > 0:
 		#In our case it is a dishwasher
-		text = str(hnum)+':'
+		text = f'{str(hnum)}:'
 		text += profilegentools.createStringList(machine.StartTimes, None, 60)
 		writeCsvLine('Dishwasher_Starttimes.txt', hnum, text)
-		
-		text = str(hnum)+':'
+
+		text = f'{str(hnum)}:'
 		text += profilegentools.createStringList(machine.EndTimes, None, 60)
 		writeCsvLine('Dishwasher_Endtimes.txt', hnum, text)
-		
-		text = str(hnum)+':'
+
+		text = f'{str(hnum)}:'
 		text += machine.LongProfile
 		writeCsvLine('Dishwasher_Profile.txt', hnum, text)
 
 def writeDeviceThermostat(machine, hnum):
-	text = str(hnum)+':'
+	text = f'{str(hnum)}:'
 	text += profilegentools.createStringList(machine.StartTimes, None, 60)
 	writeCsvLine('Thermostat_Starttimes.txt', hnum, text)
 
-	text = str(hnum)+':'
+	text = f'{str(hnum)}:'
 	text += profilegentools.createStringList(machine.Setpoints)
 	writeCsvLine('Thermostat_Setpoints.txt', hnum, text)

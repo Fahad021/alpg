@@ -55,7 +55,7 @@ startDay = 0			# Initial day
 
 
 #Select the geographic location. Refer to the Astral plugin to see available locations (or give a lon+lat)
-city_name = 'Amsterdam' 
+city_name = 'Amsterdam'
 a = Astral()
 a.solar_depression = 'civil'
 city = a[city_name]
@@ -70,8 +70,8 @@ consumptionFactor = 1.0 #consumption was a bit too high
 
 #Penetration of emerging technology in percentages
 #all values must be between 0-100
-penetrationEV 				= 10 
-penetrationPHEV 			= 15 
+penetrationEV 				= 10
+penetrationPHEV 			= 15
 penetrationPV				= 100
 penetrationBattery 			= 100	#Note only houses with PV will receive a battery! 
 penetrationInductioncooking = 25
@@ -104,7 +104,7 @@ powerBatteryLarge = 	11000 	#W
 powerBatteryMedium = 	7400  	#W
 powerBatterySmall = 	3700 	#W
 
-				
+
 #Kitchen					
 #Consumption of devices
 ConsumptionOven = 				2000	#W
@@ -143,31 +143,17 @@ personWeekendActivityChanceMax = 	30 	#percentage
 #Select the types of households
 import households
 
-householdList = []
-
-for i in range(0,2):
-	householdList.append(households.HouseholdSingleWorker())
-	
-for i in range(0,20):
-	householdList.append(households.HouseholdSingleRetired())
-	
-for i in range(0,6):
-	householdList.append(households.HouseholdDualWorker(True))
-	
-for i in range(0,6):
-	householdList.append(households.HouseholdDualWorker(False))
-	
-for i in range(0,16):
-	householdList.append(households.HouseholdDualRetired())	
-	
-for i in range(0,20):
-	householdList.append(households.HouseholdFamilyDualWorker(True))
-	
-for i in range(0,10):
-	householdList.append(households.HouseholdFamilyDualWorker(False))
-	
-
-
+householdList = [households.HouseholdSingleWorker() for _ in range(0,2)]
+householdList.extend(households.HouseholdSingleRetired() for _ in range(0,20))
+householdList.extend(households.HouseholdDualWorker(True) for _ in range(0,6))
+householdList.extend(households.HouseholdDualWorker(False) for _ in range(0,6))
+householdList.extend(households.HouseholdDualRetired() for _ in range(0,16))
+householdList.extend(
+	households.HouseholdFamilyDualWorker(True) for _ in range(0, 20)
+)
+householdList.extend(
+	households.HouseholdFamilyDualWorker(False) for _ in range(0, 10)
+)
 numHouses = len(householdList)
 
 
@@ -187,16 +173,16 @@ numHouses = len(householdList)
 timeBase = 60 			#must be a multiple of 60
 
 #Do no touch this:
-intervalLength = int(timeBase/60) #set the rate in minutes, normal in minute intervals
+intervalLength = timeBase // 60
 
 
 #TRIANA SPECIFIC SETTINGS
 #Control
 #TODO MAKE USE OF IT
 TrianaPlanning_LocalFlat 			= True
-TrianaPlanning_ReplanningInterval 	= 96	
+TrianaPlanning_ReplanningInterval 	= 96
 TrianaPlanning_Horizon 				= 192
 TrianaPlanning_MaximumIterations 	= 5
-TrianaPlanning_MinImprovenemt 		= 10 
+TrianaPlanning_MinImprovenemt 		= 10
 trianaModelPath = 'models/newr/'
 

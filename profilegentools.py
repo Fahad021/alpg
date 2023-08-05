@@ -39,47 +39,42 @@ def roundList(listIn, rate):
 
 
 def createStringList(listIn, compare=None, multiplier=1, rescale=True):
-	if compare == None:
+	if compare is None:
 		out = str(listIn[0]*multiplier)
 		for i in range(1, len(listIn)):
-			out = out + ',' + str(listIn[i]*multiplier)
-		return out
-	
-	#Check if the deadline is before the next time
+			out = f'{out},{str(listIn[i] * multiplier)}'
 	else:
 		first = True
 		out = ''
 		assert(len(listIn) == len(compare))
 		for i in range(0, len(listIn)-1):
-			if(listIn[i] < (compare[i+1]*multiplier-60)):
+			if (listIn[i] < (compare[i+1]*multiplier-60)):
 				if first:
 					out = str(listIn[i]*multiplier)
 					first = False
 				else:
-					out = out + ',' + str(listIn[i]*multiplier)
+					out = f'{out},{str(listIn[i] * multiplier)}'
+			elif first:
+				out = str(compare[i+1]*multiplier-60)
+				first = False
 			else:
-				if first:
-					out = str(compare[i+1]*multiplier-60)
-					first = False
-				else:
-					out = out + ',' + str(compare[i+1]*multiplier-60)
+				out = f'{out},{str(compare[i + 1] * multiplier - 60)}'
 		if first:
 			out = str(listIn[len(listIn)-1]*multiplier)
 		else:
-			out = out + ',' + str(listIn[len(listIn)-1]*multiplier)
-		return out
+			out = f'{out},{str(listIn[len(listIn) - 1] * multiplier)}'
+
+	return out
 
 	
 def resample(listIn, rate):
 	sample = 0
-	idx = 0
 	result = []
 	total = 0
-	while(idx < len(listIn)):
+	for idx in range(len(listIn)):
 		if(idx % rate == (rate - 1)):
 			#reset
 			result.append(round(total/rate))
-			total = 0			
-		total = total + listIn[idx]	
-		idx += 1
+			total = 0
+		total = total + listIn[idx]
 	return result

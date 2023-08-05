@@ -31,7 +31,7 @@ for opt, arg in opts:
 	if opt in ("-c", "--config"):
 		cfgFile = arg
 	elif opt in ("-o", "--output"):
-		cfgOutputDir = 'output/'+arg+'/'
+		cfgOutputDir = f'output/{arg}/'
 
-outputFolder = cfgOutputDir		
+outputFolder = cfgOutputDir
 sys.path.insert(0, 'configs')

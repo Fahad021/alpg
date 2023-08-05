@@ -57,17 +57,14 @@ class DHWDemand(HeatDevice):
 		result = [0] * 1440
 		showerOccupancy = [0] * 1440
 
-		cookingIncluded = False
-		if cookingDuration == 0:
-			cookingIncluded = True
-
+		cookingIncluded = cookingDuration == 0
 		for p in range(0, len(persons)):
 			pResult = [0] * 1440
 
 			showerStart = None
 			showerDuration = 0
 			rand = random.randint(0, 100)
-			if (dayOfWeek in persons[p].showerDays or rand < 15) and not rand >= 85:
+			if (dayOfWeek in persons[p].showerDays or rand < 15) and rand < 85:
 				showerDuration = random.randint(persons[p].showerDuration-1, persons[p].showerDuration+1)
 
 			if showerDuration > 0: #actually use the shower
@@ -88,7 +85,7 @@ class DHWDemand(HeatDevice):
 							showerOptions.append(i)
 
 				# Now determine when to shower exactly:
-				if persons[p].showerMorning and len(showerOptions) > 0:
+				if persons[p].showerMorning and showerOptions:
 					# Try to get the earliest possible moment
 					showerStart = showerOptions[0]
 				elif len(showerOptions) > 0:
@@ -136,7 +133,7 @@ class DHWDemand(HeatDevice):
 						options.append(i)
 
 			# Now calculate the tap usage based on the time being active
-			tapmoments = random.sample(options, (int(len(options) / random.randint(120, 150))))
+			tapmoments = random.sample(options, len(options) // random.randint(120, 150))
 			for i in tapmoments:
 				pResult[i] = 0.083 * powerPerLitre * random.randint(25,50)
 
@@ -177,10 +174,10 @@ class Thermostat(HeatDevice):
 				#Random higher setpoint
 				if setpoints[i] > 0.001 and random.randint(0,9) < 2:
 					self.Setpoints.append(setpoints[i]+1.0)
-					self.StartTimes.append(day*1440 + i)
 				else:
 					self.Setpoints.append(setpoints[i])
-					self.StartTimes.append(day*1440 + i)
+
+				self.StartTimes.append(day*1440 + i)
 
 	def writeDevice(self, hnum):
 		config.writer.writeDeviceThermostat(self, hnum)

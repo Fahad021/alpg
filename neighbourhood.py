@@ -22,6 +22,8 @@ config = importlib.import_module(cfgFile)
 
 import houses
 
+
+
 class neighbourhood:
 	print("Creating Neighbourhood")
 	houseList = []
@@ -31,12 +33,12 @@ class neighbourhood:
 
 	for i in range(0, len(config.householdList)):
 		houseList.append(houses.House())
-	
+
 	#Add PV to houses:
 	for i in range(0, len(config.householdList)):
 		if i < (round(len(config.householdList)*(config.penetrationPV/100))):
 			pvList[i] = 1
-	
+
 	#And randomize:
 	random.shuffle(pvList)
 
@@ -48,28 +50,28 @@ class neighbourhood:
 	for i in range(0, len(config.householdList)):
 		if inductioncookingList[i] == 1:
 			config.householdList[i].hasInductionCooking = True
-	
+
 	# Add Combined Heat Power
 	i = 0
 	while i < (round(len(config.householdList)*(config.penetrationCHP/100))) - (round(len(config.householdList)*(config.penetrationPV/100))):
 		j = random.randint(0,len(config.householdList)-1)
 		if config.householdList[j].hasCHP == False and pvList[j] == 0: # First supply houses without PV
 			config.householdList[j].hasCHP = True
-			i = i + 1
+			i += 1
 	if (round(len(config.householdList)*(config.penetrationPV/100))) > (round(len(config.householdList)*(config.penetrationCHP/100))): # If there are too much CHPs compared to PV, add some more CHPS
 		while i < (round(len(config.householdList)*(config.penetrationCHP/100))):
 			j = random.randint(0,len(config.householdList)-1)
 			if config.householdList[j].hasCHP == False: # First supply houses without PV
 				config.householdList[j].hasCHP = True
-				i = i + 1
-			
+				i += 1
+
 	# Add heat pumps
 	i = 0
 	while i < (round(len(config.householdList)*(config.penetrationHeatPump/100))):
 		j = random.randint(0,len(config.householdList)-1)
 		if config.householdList[j].hasHP == False and config.householdList[j].hasCHP == False:
 			config.householdList[j].hasHP = True
-			i = i + 1
+			i += 1
 
 	#Now add batteries
 	i = 0
@@ -77,8 +79,8 @@ class neighbourhood:
 		j = random.randint(0,len(config.householdList)-1)
 		if (pvList[j] == 1 or config.householdList[j].hasCHP) and batteryList[j] == 0:
 			batteryList[j] = 1
-			i = i + 1
-	
+			i += 1
+
 	# Add EVs
 	drivingDistance = [0] * len(config.householdList)
 	for i in range(0, len(config.householdList)):
@@ -89,7 +91,7 @@ class neighbourhood:
 			#We can still add an EV
 			added = False
 			j = 0
-			while added == False:
+			while not added:
 				if config.householdList[j].Persons[0].DistanceToWork == drivingDistance[i]:
 					if config.householdList[j].hasEV == False:
 						if i < (round(len(config.householdList)*(config.penetrationEV/100))):
@@ -101,10 +103,10 @@ class neighbourhood:
 						config.householdList[j].hasEV = True
 						added = True
 				j = j + 1
-	
+
 	#Shuffle
 	random.shuffle(config.householdList)
-		
+
 	#And then map households to houses
 	for i in range(0,len(config.householdList)):
 		config.householdList[i].setHouse(houseList[i])
@@ -117,15 +119,13 @@ class neighbourhood:
 			# Hence, if a household is to be more or less energy neutral we have:
 			area = round( (config.householdList[i].ConsumptionYearly / config.PVProductionPerYear) * 1.6) #average panel is 1.6m2
 			config.householdList[i].House.addPV(area)
-			
+
 		if batteryList[i] == 1:
 			# Do something based on the household size and whether the house has an EV:
 			if config.householdList[i].hasEV:
 				#House has an EV as well!
 				config.householdList[i].House.addBattery(config.capacityBatteryLarge, config.powerBatteryLarge) #Let's give it a nice battery!
+			elif (config.householdList[i].ConsumptionYearly > 2500):
+				config.householdList[i].House.addBattery(config.capacityBatteryMedium, config.powerBatteryMedium)
 			else:
-				#NO EV, just some peak shaving:
-				if(config.householdList[i].ConsumptionYearly > 2500):
-					config.householdList[i].House.addBattery(config.capacityBatteryMedium, config.powerBatteryMedium)
-				else:
-					config.householdList[i].House.addBattery(config.capacityBatterySmall, config.powerBatterySmall)
+				config.householdList[i].House.addBattery(config.capacityBatterySmall, config.powerBatterySmall)

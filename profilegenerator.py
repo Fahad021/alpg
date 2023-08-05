@@ -27,7 +27,7 @@ print("This program comes with ABSOLUTELY NO WARRANTY.", flush=True)
 print("This is free software, and you are welcome to redistribute it under certain conditions.", flush=True)
 print("See the acompanying license for more information.\n", flush=True)
 
-if(len(sys.argv) > 1):
+if (len(sys.argv) > 1):
 	#Get arguments:
 	try:
 		opts, args = getopt.getopt(sys.argv[1:],"c:o:f",["config=","output=", "force"])
@@ -45,7 +45,7 @@ if(len(sys.argv) > 1):
 		if opt in ("-c", "--config"):
 			cfgFile = arg
 		elif opt in ("-o", "--output"):
-			cfgOutputDir = 'output/'+arg+'/'
+			cfgOutputDir = f'output/{arg}/'
 		elif opt in ("-f", "--force"):
 			forceDeletion = True
 
@@ -55,7 +55,6 @@ if(len(sys.argv) > 1):
 	os.makedirs(os.path.dirname(cfgOutputDir), exist_ok=True)
 
 	if os.listdir(cfgOutputDir):
-		# Empty the directory
 		if forceDeletion:
 			for tf in os.listdir(cfgOutputDir):
 				fp = os.path.join(cfgOutputDir, tf)
@@ -67,8 +66,8 @@ if(len(sys.argv) > 1):
 		else:
 			print("Config directory is not empty! Provide the --force flag to delete the contents", flush=True)
 			exit()
-			
-			
+
+
 
 
 else:
@@ -82,9 +81,12 @@ import profilegentools
 from configLoader import *
 config = importlib.import_module(cfgFile)
 
-print('Loading config: '+cfgFile, flush=True)
-print("The current config will create and simulate "+str(len(config.householdList))+" households", flush=True)
-print("Results will be written into: "+cfgOutputDir+"\n", flush=True)
+print(f'Loading config: {cfgFile}', flush=True)
+print(
+	f"The current config will create and simulate {len(config.householdList)} households",
+	flush=True,
+)
+print(f"Results will be written into: {cfgOutputDir}" + "\n", flush=True)
 print("NOTE: Simulation may take a (long) while...\n", flush=True)
 
 # Check the config:
@@ -118,9 +120,9 @@ householdList = config.householdList
 numOfHouseholds = len(householdList)
 
 while len(householdList) > 0:
-	print("Household "+str(hnum+1)+" of "+str(numOfHouseholds), flush=True)
+	print(f"Household {str(hnum + 1)} of {numOfHouseholds}", flush=True)
 	householdList[0].simulate()
-	
+
 	#Warning: On my PC the random number is still the same at this point, but after calling scaleProfile() it isn't!!!
 	householdList[0].scaleProfile()
 	householdList[0].reactivePowerProfile()
@@ -128,11 +130,11 @@ while len(householdList) > 0:
 
 	config.writer.writeHousehold(householdList[0], hnum)
 	config.writer.writeNeighbourhood(hnum)
-	
+
 	householdList[0].Consumption = None
 	householdList[0].Occupancy = None
 	for p in householdList[0].Persons:
 		del(p)
 	del(householdList[0])
-	
+
 	hnum = hnum + 1

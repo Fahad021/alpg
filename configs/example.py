@@ -140,28 +140,17 @@ personWeekendActivityChanceMax = 	30 	#percentage
 
 
 
-householdList = []
-
 #Select the types of households
 import households
 
-for i in range(0,1):
-	householdList.append(households.HouseholdSingleWorker())
-
-for i in range(0,2):
-	householdList.append(households.HouseholdSingleRetired())
-
-for i in range(0,1):
-	householdList.append(households.HouseholdDualWorker(True))
-
-for i in range(0,1):
-	householdList.append(households.HouseholdDualWorker(False))
-
-for i in range(0,2):
-	householdList.append(households.HouseholdDualRetired())
-
-for i in range(0,2):
-	householdList.append(households.HouseholdFamilyDualWorker(True))
-
-for i in range(0,1):
-	householdList.append(households.HouseholdFamilyDualWorker(False))
+householdList = [households.HouseholdSingleWorker() for _ in range(0,1)]
+householdList.extend(households.HouseholdSingleRetired() for _ in range(0,2))
+householdList.extend(households.HouseholdDualWorker(True) for _ in range(0,1))
+householdList.extend(households.HouseholdDualWorker(False) for _ in range(0,1))
+householdList.extend(households.HouseholdDualRetired() for _ in range(0,2))
+householdList.extend(
+	households.HouseholdFamilyDualWorker(True) for _ in range(0, 2)
+)
+householdList.extend(
+	households.HouseholdFamilyDualWorker(False) for _ in range(0, 1)
+)
